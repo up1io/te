@@ -1,7 +1,14 @@
-#include <curses.h>
+#ifdef __STDC_ALLOC_LIB__
+#define __STDC_WANT_LIB_EXT2__ 1
+#else
+#define _POSIX_C_SOURCE 200809L
+#endif
+ 
+// #include <curses.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <assert.h>
 
@@ -10,26 +17,57 @@ enum EDITOR_MODE {
   INSERT,
 };
 
-char *readFile(const char *filename)
+typedef struct {
+  char **lines;
+  int num_lines;
+} buffer;
+
+char *strdup(const char *src) {
+    char *dst = malloc(strlen (src) + 1);
+    if (dst == NULL) return NULL;
+    strcpy(dst, src);
+    return dst;
+}
+
+int append_line(char ***lines, int *num_lines, const char *new_content)
+{
+  char **temp = realloc(*lines, (*num_lines + 1) * sizeof(char *)); 
+  if (!temp) {
+    return -1;
+  }
+
+  *lines = temp;
+
+  (*lines)[*num_lines] = strdup(new_content);
+  if (!(*lines)[*num_lines]) {
+    return -1;
+  }
+
+  (*num_lines)++;
+  return 0;
+}
+
+int readFile(const char *filename, buffer *out_buf)
 {
   FILE *file = fopen(filename, "r");
   assert(file != NULL);
 
-  char *code;
-  size_t n = 0;
-  char c;
+  char *line = NULL;
+  size_t len = 0;
+  ssize_t read;
 
-  code = malloc(1000);
-
-  while((c = fgetc(file)) != EOF) {
-    code[n++] = (char)c;
+  while ((read = getline(&line, &len, file)) != -1) {
+    line[strcspn(line, "\n")] = '\0';
+    int result = append_line(&out_buf->lines, &out_buf->num_lines, line);
+    if (result != 0) {
+      fclose(file);
+      return -1;
+    }
   }
-
-  code[n++] = '\0';
 
   fclose(file);
 
-  return code;
+  return 0;
 }
 
 int main(int argc, char *argv[])
@@ -41,8 +79,14 @@ int main(int argc, char *argv[])
 
   const char *filename = argv[1];
 
-  const char *buf = readFile(filename);
+  buffer buf = {};
+  readFile(filename, &buf);
 
+  for (int i = 0; i < buf.num_lines; i++) {
+    printf("Line %d | Content: %s\n", i, buf.lines[i]);
+  }
+
+  /*
   WINDOW *mainwin = initscr();
   cbreak();
   noecho();
@@ -61,11 +105,6 @@ int main(int argc, char *argv[])
   refresh();
 
   while((ch = wgetch(mainwin)) != 'q') {
-    // clear();
-    //printw("%s", buf);
-    //
-    //
-
     if (mode == INSERT && ch != 27) {
       move(row, y);
       addch(ch);
@@ -104,5 +143,6 @@ int main(int argc, char *argv[])
   }
 
   endwin();
+  */
   return 0;
 }

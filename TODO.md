@@ -4,7 +4,10 @@
 [x] rough cursor movement 
 [x] added some mode switching (INSERT, NORMAL)
 
-# WDay 2 (future)
+# WDay 2
+[x] add buffer
+
+# WDay 3 (future)
 [ ] modify the buffer instead of drawing on the screen
 [ ] save buffer back to file
 [ ] make it possible to scroll larger files
