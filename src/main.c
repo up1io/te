@@ -108,16 +108,58 @@ void cursor_move(buffer *buf, const enum MOVE_DIRECTION dir)
   }
 }
 
+int get_line_len(const char *line)
+{
+  int i = 0;
+  while(line[sizeof(char) * i] != '\0') {
+    i++;
+  }
+  return i;
+}
+
+// Behaviour
+// moving to right ---> for next word
+// moving to left <--- for previous word
+// if hit the end on the left (so 0) move one row up
+// if hit the end of the right (max line len) move one row down
 void move_cursor_until_find_space_ch(buffer *buf, enum MOVE_DIRECTION dir)
 {
   // NOTE(john): 
   // Fallback to the default movement if the user try to move on a line outside of the current buffer
   if (buf->cursor_y > buf->num_lines-1) {
     cursor_move(buf, dir);
+    return;
   }
 
   const char *current_line = buf->lines[buf->cursor_y];
-  mvprintw(24, 0, "%s", current_line);
+  int line_len = get_line_len(current_line);
+
+  // Note(john): if the user is on the end of the line then go the next row
+  if (buf->cursor_x >= line_len) {
+    // TODO(john): 
+    buf->cursor_x = 0;
+    buf->cursor_y++;
+    // cursor_move(buf, MOVE_DIR_DOWN);
+  }
+
+  int offset_x = buf->cursor_x;
+
+  if (dir == MOVE_DIR_LEFT) {
+    while(current_line[offset_x] != ' ' && offset_x > 0) {
+      offset_x--;
+    }
+  } else if (dir == MOVE_DIR_RIGHT) {
+    while(current_line[offset_x] != ' ' && current_line[offset_x] != '\0') {
+      offset_x++;
+    }
+  }
+
+  buf->cursor_x = offset_x;
+
+  move(24,0);
+  clrtoeol();
+  mvprintw(24, 0, "%s %d,%d len %d", current_line, buf->cursor_y, buf->cursor_x, line_len);
+  cursor_move(buf, dir);
 }
 
 void process_input(buffer *buf, const char ch)
