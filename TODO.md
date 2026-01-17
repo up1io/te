@@ -7,7 +7,11 @@
 # WDay 2
 [x] add buffer
 
-# WDay 3 (future)
+# WDay 3
+[x] add basic cursor movement
+[ ] add move per word movement
+ 
+# WDay 4 (future)
 [ ] modify the buffer instead of drawing on the screen
 [ ] save buffer back to file
 [ ] make it possible to scroll larger files
