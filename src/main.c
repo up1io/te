@@ -4,7 +4,7 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
  
-// #include <curses.h>
+#include <curses.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -70,6 +70,15 @@ int readFile(const char *filename, buffer *out_buf)
   return 0;
 }
 
+void drawBuffer(const buffer *buf)
+{
+  for (int i = 0; i < buf->num_lines; i++) {
+    mvprintw(i, 0, "%s", buf->lines[i]);
+  } 
+
+  refresh();
+}
+
 int main(int argc, char *argv[])
 {
   if (argc < 2) {
@@ -82,67 +91,30 @@ int main(int argc, char *argv[])
   buffer buf = {};
   readFile(filename, &buf);
 
-  for (int i = 0; i < buf.num_lines; i++) {
-    printf("Line %d | Content: %s\n", i, buf.lines[i]);
-  }
+  int w, h;
+  int ch;
 
-  /*
-  WINDOW *mainwin = initscr();
+  initscr();
   cbreak();
   noecho();
   clear();
 
+  cbreak();
+
+  w = COLS;
+  h = LINES;
+
   keypad(stdscr, TRUE);
 
-  printw("%s", buf);
+  // printw("w %d h %d", w, h);
+  refresh(); 
 
-  char ch;
-  int row = 0;
-  int y = 0;
-  int mode = NORMAL;
-
-  move(row, y);
-  refresh();
-
-  while((ch = wgetch(mainwin)) != 'q') {
-    if (mode == INSERT && ch != 27) {
-      move(row, y);
-      addch(ch);
-      move(row, y++);
-    } else if (ch == 27) {
-      mode = NORMAL;
-    }
-
-    if (mode == NORMAL) {
-      switch (ch) {
-        case 'j':
-          row++;
-          break;
-        case 'k':
-          if(row > 0) row--;
-          break;
-        case 'w':
-          y++;
-          break;
-        case 'b':
-          if (y > 0) y--;
-          break;
-        case 'i':
-          mode = INSERT;
-          break;
-        case 'n':
-          mode = NORMAL;
-          break;
-      }
-    }
-
-    mvprintw(0, 40, "X %d Y %d M %d", row, y, mode);
-
-    move(row, y);
-    refresh();
+  drawBuffer(&buf);
+  while ((ch = getch()) != 'q') {
+    drawBuffer(&buf);
   }
 
   endwin();
-  */
+
   return 0;
 }
