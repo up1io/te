@@ -9,7 +9,7 @@
 
 # WDay 3
 [x] add basic cursor movement
-[ ] add move per word movement
+[ ] add move per word movement (wip)
  
 # WDay 4 (future)
 [ ] modify the buffer instead of drawing on the screen
