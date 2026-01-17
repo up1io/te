@@ -17,9 +17,16 @@ enum EDITOR_MODE {
   INSERT,
 };
 
+enum MOVE_DIRECTION {
+  MOVE_DIRECTION_FORWARD = 0,
+  MOVE_DIRECTION_BACKWARD,
+}
+
 typedef struct {
   char **lines;
   int num_lines;
+  int cursor_x;
+  int cursor_y;
 } buffer;
 
 char *strdup(const char *src) {
@@ -70,13 +77,54 @@ int readFile(const char *filename, buffer *out_buf)
   return 0;
 }
 
-void drawBuffer(const buffer *buf)
+void draw_buffer(const buffer *buf)
 {
   for (int i = 0; i < buf->num_lines; i++) {
     mvprintw(i, 0, "%s", buf->lines[i]);
   } 
 
+  move(buf->cursor_y, buf->cursor_x);
+
   refresh();
+}
+
+void move_cursor_until_find_space_ch(buffer *buf, MOVE_DIRECTION dir)
+{
+  // const char *current_line = buf->lines[buf->cursor_y];
+
+  if (dir == MOVE_DIRECTION_BACKWARD && buf->cursor_x > 0) {
+    buf->cursor_x--;
+  }
+  if (dir == MOVE_DIRECTION_FORWARD) {
+    buf->cursor_x++;
+  }
+
+  // mvprintw(24, 0, "%s %c", current_line, current_ch);
+}
+
+void process_input(buffer *buf, const char ch)
+{
+  // NOTE(john): basic movement
+  switch(ch) {
+    case 'k':
+      if (buf->cursor_y > 0) buf->cursor_y--;
+      break;
+    case 'j':
+      buf->cursor_y++;
+      break;
+    case 'h':
+      if (buf->cursor_x > 0) buf->cursor_x--;
+      break;
+    case 'l':
+      buf->cursor_x++;
+      break;
+    case 'w':
+      move_cursor_until_find_space_ch(buf, MOVE_DIRECTION_FORWARD);
+      break;
+    case 'b':
+      move_cursor_until_find_space_ch(buf, MOVE_DIRECTION_BACKWARD);
+      break;
+  }
 }
 
 int main(int argc, char *argv[])
@@ -89,6 +137,10 @@ int main(int argc, char *argv[])
   const char *filename = argv[1];
 
   buffer buf = {};
+
+  buf.cursor_x = 0;
+  buf.cursor_y = 0;
+
   readFile(filename, &buf);
 
   int w, h;
@@ -109,9 +161,10 @@ int main(int argc, char *argv[])
   // printw("w %d h %d", w, h);
   refresh(); 
 
-  drawBuffer(&buf);
+  draw_buffer(&buf);
   while ((ch = getch()) != 'q') {
-    drawBuffer(&buf);
+    process_input(&buf, ch);
+    draw_buffer(&buf);
   }
 
   endwin();
