@@ -20,7 +20,7 @@ enum EDITOR_MODE {
 enum MOVE_DIRECTION {
   MOVE_DIRECTION_FORWARD = 0,
   MOVE_DIRECTION_BACKWARD,
-}
+};
 
 typedef struct {
   char **lines;
@@ -88,18 +88,23 @@ void draw_buffer(const buffer *buf)
   refresh();
 }
 
-void move_cursor_until_find_space_ch(buffer *buf, MOVE_DIRECTION dir)
+void move_cursor_until_find_space_ch(buffer *buf, enum MOVE_DIRECTION dir)
 {
-  // const char *current_line = buf->lines[buf->cursor_y];
+  // NOTE(john): 
+  // Fallback to the default movement if the user try to move on a line outside of the current buffer
+  if (buf->cursor_y > buf->num_lines-1) {
+    if (dir == MOVE_DIRECTION_BACKWARD && buf->cursor_x > 0) {
+      buf->cursor_x--;
+    }
+    if (dir == MOVE_DIRECTION_FORWARD) {
+      buf->cursor_x++;
+    }
 
-  if (dir == MOVE_DIRECTION_BACKWARD && buf->cursor_x > 0) {
-    buf->cursor_x--;
-  }
-  if (dir == MOVE_DIRECTION_FORWARD) {
-    buf->cursor_x++;
+    return;
   }
 
-  // mvprintw(24, 0, "%s %c", current_line, current_ch);
+  const char *current_line = buf->lines[buf->cursor_y];
+  mvprintw(24, 0, "%s", current_line);
 }
 
 void process_input(buffer *buf, const char ch)
