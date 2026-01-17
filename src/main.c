@@ -18,8 +18,10 @@ enum EDITOR_MODE {
 };
 
 enum MOVE_DIRECTION {
-  MOVE_DIRECTION_FORWARD = 0,
-  MOVE_DIRECTION_BACKWARD,
+  MOVE_DIR_RIGHT = 0,
+  MOVE_DIR_LEFT,
+  MOVE_DIR_UP,
+  MOVE_DIR_DOWN
 };
 
 typedef struct {
@@ -88,19 +90,30 @@ void draw_buffer(const buffer *buf)
   refresh();
 }
 
+void cursor_move(buffer *buf, const enum MOVE_DIRECTION dir)
+{
+  switch (dir) {
+    case MOVE_DIR_RIGHT:
+      buf->cursor_x++;
+      break;
+    case MOVE_DIR_LEFT:
+      if (buf->cursor_x > 0) buf->cursor_x--;
+      break;
+    case MOVE_DIR_UP:
+      if (buf->cursor_y > 0) buf->cursor_y--;
+      break;
+    case MOVE_DIR_DOWN:
+      buf->cursor_y++;
+      break;
+  }
+}
+
 void move_cursor_until_find_space_ch(buffer *buf, enum MOVE_DIRECTION dir)
 {
   // NOTE(john): 
   // Fallback to the default movement if the user try to move on a line outside of the current buffer
   if (buf->cursor_y > buf->num_lines-1) {
-    if (dir == MOVE_DIRECTION_BACKWARD && buf->cursor_x > 0) {
-      buf->cursor_x--;
-    }
-    if (dir == MOVE_DIRECTION_FORWARD) {
-      buf->cursor_x++;
-    }
-
-    return;
+    cursor_move(buf, dir);
   }
 
   const char *current_line = buf->lines[buf->cursor_y];
@@ -112,22 +125,22 @@ void process_input(buffer *buf, const char ch)
   // NOTE(john): basic movement
   switch(ch) {
     case 'k':
-      if (buf->cursor_y > 0) buf->cursor_y--;
+      cursor_move(buf, MOVE_DIR_UP);
       break;
     case 'j':
-      buf->cursor_y++;
+      cursor_move(buf, MOVE_DIR_DOWN);
       break;
     case 'h':
-      if (buf->cursor_x > 0) buf->cursor_x--;
+      cursor_move(buf, MOVE_DIR_LEFT);
       break;
     case 'l':
-      buf->cursor_x++;
+      cursor_move(buf, MOVE_DIR_RIGHT);
       break;
     case 'w':
-      move_cursor_until_find_space_ch(buf, MOVE_DIRECTION_FORWARD);
+      move_cursor_until_find_space_ch(buf, MOVE_DIR_RIGHT);
       break;
     case 'b':
-      move_cursor_until_find_space_ch(buf, MOVE_DIRECTION_BACKWARD);
+      move_cursor_until_find_space_ch(buf, MOVE_DIR_LEFT);
       break;
   }
 }
